@@ -2,7 +2,6 @@ UPDATE rule_values SET rule_value='false' WHERE rule_name='Quarm:EnableAdminChec
 UPDATE rule_values SET rule_value='6' WHERE rule_name='World:MaxClientsPerIP';
 UPDATE rule_values SET rule_value='6' WHERE rule_name='World:AccountSessionLimit';
 
-UPDATE launcher SET dynamics=10 WHERE name='dynzone1';
 UPDATE launcher SET dynamics=0 WHERE name='dynzone2';
 UPDATE launcher SET dynamics=0 WHERE name='zone1';
 UPDATE launcher SET dynamics=0 WHERE name='zone2';

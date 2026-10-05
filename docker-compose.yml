@@ -37,9 +37,10 @@ services:
 
   world:
     <<: *base-service
-    command: ['/app/sync_static_zones.sh', '/app/world']
+    command: ['/app/sync_launchers.sh', '/app/world']
     environment:
       <<: *base-environment
+      DYNAMIC_ZONES: ${DYNAMIC_ZONES:-10}
       STATIC_ZONES: ${STATIC_ZONES:-}
       STATIC_ZONE_PORT_START: ${STATIC_ZONE_PORT_START:-7401}
       STATIC_ZONE_PORT_END: ${STATIC_ZONE_PORT_END:-7425}

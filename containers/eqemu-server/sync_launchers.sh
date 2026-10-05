@@ -1,9 +1,11 @@
 #!/bin/bash
-# Write STATIC_ZONES to the static launcher's rows in launcher_zones, then run
-# the given command. World reads launcher_zones only when it starts, so this
+# Apply DYNAMIC_ZONES and STATIC_ZONES to the launcher tables, then run the
+# given command. World reads the launcher tables only when it starts, so this
 # runs in the world container just before world.
 set -euo pipefail
 
+DYNAMIC_LAUNCHER=dynzone1
+DYNAMIC_ZONES=${DYNAMIC_ZONES:-10}
 LAUNCHER=static
 PORT_START=${STATIC_ZONE_PORT_START:-7401}
 PORT_END=${STATIC_ZONE_PORT_END:-7425}
@@ -12,6 +14,12 @@ export MYSQL_PWD="$DATABASE_PASSWORD"
 sql() {
     mariadb -h db -u "$DATABASE_USER" -N -B "$DATABASE_NAME" -e "$1"
 }
+
+# World names dynamic zones dynamic_01 through dynamic_254.
+if [[ ! "$DYNAMIC_ZONES" =~ ^[0-9]+$ ]] || (( DYNAMIC_ZONES > 254 )); then
+    echo "DYNAMIC_ZONES: must be a number from 0 to 254, got [$DYNAMIC_ZONES]" >&2
+    exit 1
+fi
 
 zones=()
 IFS=', ' read -ra items <<< "${STATIC_ZONES:-}"
@@ -49,7 +57,10 @@ if (( ${#zones[@]} > 0 )); then
     fi
 fi
 
-statements="INSERT INTO launcher (name, dynamics) VALUES ('$LAUNCHER', 0)
+echo "Dynamic zones: [$DYNAMIC_ZONES]"
+statements="INSERT INTO launcher (name, dynamics) VALUES ('$DYNAMIC_LAUNCHER', $DYNAMIC_ZONES)
+    ON DUPLICATE KEY UPDATE dynamics = $DYNAMIC_ZONES;
+INSERT INTO launcher (name, dynamics) VALUES ('$LAUNCHER', 0)
     ON DUPLICATE KEY UPDATE dynamics = 0;
 DELETE FROM launcher_zones WHERE launcher = '$LAUNCHER';"
 port=$PORT_START

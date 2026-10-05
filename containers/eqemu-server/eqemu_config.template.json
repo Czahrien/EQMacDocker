@@ -4,7 +4,7 @@
       "defaultstatus": "0",
       "ports": {
         "low": "7000",
-        "high": "7400"
+        "high": "7374"
       }
     },
     "ucs": {

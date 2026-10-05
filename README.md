@@ -54,8 +54,8 @@ docker compose logs -f world
 
 On the first start the database container imports the Quarm database. Once
 the server is up, world's log shows the `boats` and `dynzone1` launchers
-connecting, followed by 22 `New Zone Server connection` lines (12 boat zones
-and 10 dynamic zones). The `shared` container loads shared memory and exits;
+connecting, followed by a `New Zone Server connection` line for each zone
+process: 22 with the default settings (12 boat zones and 10 dynamic zones). The `shared` container loads shared memory and exits;
 that is expected.
 
 ### Connecting a client
@@ -80,7 +80,7 @@ docker compose exec db sh -c 'mariadb -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQ
 | `shared`    | Loads items, spells, etc. into shared memory, then exits        |
 | `login`     | Login server                                                    |
 | `world`     | World server                                                    |
-| `zone`      | `dynzone1` launcher: 10 idle zone processes                     |
+| `zone`      | `dynzone1` launcher: `DYNAMIC_ZONES` idle zone processes        |
 | `boats`     | `boats` launcher: the 12 zones boats travel between             |
 | `static`    | `static` launcher: zones listed in `STATIC_ZONES` (optional)    |
 | `ucs`       | Chat server                                                     |
@@ -109,10 +109,14 @@ the other server processes reach them over the Docker network.
 
 Zones run in three launcher containers:
 
-  - **Dynamic zones** (`zone`): 10 idle zone processes. When a player enters a
-    zone that is not running, world assigns it to one of them. Once a zone
-    has been empty for a while (`Zone:AutoShutdownDelay`, an hour in the
-    Quarm database), it shuts down and the process becomes idle again.
+  - **Dynamic zones** (`zone`): `DYNAMIC_ZONES` idle zone processes (default
+    10). When a player enters a zone that is not running, world assigns it to
+    one of them. Once a zone has been empty for a while
+    (`Zone:AutoShutdownDelay`, an hour in the Quarm database), it shuts down
+    and the process becomes idle again. When every process is busy, players
+    cannot enter zones that are not already running, so set this to at least
+    the number of zones you expect to be in use at once. The maximum is 254;
+    each idle process uses about 14 MiB and each loaded zone a few times that.
   - **Boat zones** (`boats`): the zones boats travel between (Erudin, Qeynos,
     Freeport, Butcherblock, Timorous Deep, Firiona Vie and others) always run,
     so boats keep working. They are set up by
@@ -124,10 +128,11 @@ Zones run in three launcher containers:
     one port per zone. When `STATIC_ZONES` is empty, the `static` container
     exits at startup.
 
-World applies `STATIC_ZONES` when it starts. After changing it, run
-`docker compose up -d`; this restarts world, which disconnects everyone
-online. World refuses to start if the list has an unknown zone, a boat zone,
-or more zones than ports, and its log says why.
+World applies `DYNAMIC_ZONES` and `STATIC_ZONES` when it starts. After
+changing either, run `docker compose up -d`; this restarts world, which
+disconnects everyone online. World refuses to start, and its log says why,
+if `DYNAMIC_ZONES` is not a number from 0 to 254, or if `STATIC_ZONES` has an
+unknown zone, a boat zone, or more zones than ports.
 
 Each static zone is a process that runs whether or not anyone is in it, so
 memory use grows with the list.
@@ -165,6 +170,7 @@ All settings live in `.env`. Changes take effect after `docker compose up -d`.
 | `DATABASE_NAME`          | `eq`           | Database name                                           |
 | `LOGIN_PASSWORD_SALT`    | required       | Salt for login account passwords                        |
 | `WORLD_SHARED_KEY`       | required       | Key the server processes use to authenticate with world |
+| `DYNAMIC_ZONES`          | `10`           | Idle zone processes for dynamic zones (0-254)           |
 | `STATIC_ZONES`           | empty          | Comma-separated zone short names to keep running        |
 | `STATIC_ZONE_PORT_START` | `7401`         | First static zone port                                  |
 | `STATIC_ZONE_PORT_END`   | `7425`         | Last static zone port                                   |

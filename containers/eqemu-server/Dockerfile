@@ -63,7 +63,7 @@ ADD containers/eqemu-server/login.template.json /app/
 ADD containers/eqemu-server/eqemu_config.template.json /app/
 
 ADD containers/eqemu-server/docker-entrypoint.sh /docker-entrypoint.sh
-ADD containers/eqemu-server/sync_static_zones.sh /app/
+ADD containers/eqemu-server/sync_launchers.sh /app/
 ADD containers/eqemu-server/static_launcher.sh /app/
 
 ENTRYPOINT [ "/docker-entrypoint.sh" ]
