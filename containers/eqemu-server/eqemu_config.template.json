@@ -7,18 +7,7 @@
         "high": "7400"
       }
     },
-    "qsdatabase": {
-      "host": "db",
-      "port": "3306",
-      "username": "${DATABASE_USER}",
-      "password": "${DATABASE_PASSWORD}",
-      "db": "${DATABASE_NAME}"
-    },
-    "chatserver": {
-      "host": "${SERVER_ADDRESS}",
-      "port": "7778"
-    },
-    "mailserver": {
+    "ucs": {
       "host": "${SERVER_ADDRESS}",
       "port": "7778"
     },
@@ -30,7 +19,7 @@
         "host": "login"
       },
       "tcp": {
-        "host": "world",
+        "ip": "world",
         "port": "9000"
       },
       "key": "somelongrandomstring12345asdfffff",
@@ -38,6 +27,13 @@
       "longname": "${SERVER_LONG_NAME}",
       "address": "${SERVER_ADDRESS}",
       "localaddress": "${SERVER_ADDRESS}"
+    },
+    "qsdatabase": {
+      "host": "db",
+      "port": "3306",
+      "username": "${DATABASE_USER}",
+      "password": "${DATABASE_PASSWORD}",
+      "db": "${DATABASE_NAME}"
     },
     "database": {
       "db": "${DATABASE_NAME}",

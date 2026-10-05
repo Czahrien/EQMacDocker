@@ -15,6 +15,8 @@ services:
   shared:
     <<: *base-service
     command: /app/shared_memory
+    stdin_open: true
+    tty: true
     volumes:
       - shared:/app/shared
     depends_on:
@@ -34,7 +36,7 @@ services:
     command: /app/world
     environment:
       <<: *base-environment
-      WAIT_PATHS: /app/shared/base_data
+        #WAIT_PATHS: /app/shared/base_data
     ports:
       - 9000:9000/tcp
       - 9000:9000/udp
