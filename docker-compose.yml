@@ -101,6 +101,34 @@ services:
     volumes:
       - database:/var/lib/mysql
 
+  # Optional tools, enabled through COMPOSE_PROFILES in .env.
+  phpmyadmin:
+    image: phpmyadmin:5.2
+    profiles: [phpmyadmin]
+    environment:
+      PMA_HOST: db
+    ports:
+      - ${PHPMYADMIN_PORT:-8080}:80
+    depends_on:
+      - db
+
+  peqeditor:
+    build:
+      context: .
+      dockerfile: containers/peq-editor/Dockerfile
+    profiles: [peqeditor]
+    environment:
+      DB_HOST: db
+      DB_USER: ${DATABASE_USER:-eq}
+      DB_PASSWORD: ${DATABASE_PASSWORD:-eq}
+      DB_NAME: ${DATABASE_NAME:-eq}
+      PEQ_EDITOR_PASSWORD: ${PEQ_EDITOR_PASSWORD:-}
+      WAIT_HOSTS: db:3306
+    ports:
+      - ${PEQ_EDITOR_PORT:-8081}:80
+    depends_on:
+      - db
+
 volumes:
   shared:
   database:
