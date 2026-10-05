@@ -37,9 +37,12 @@ services:
 
   world:
     <<: *base-service
-    command: /app/world
+    command: ['/app/sync_static_zones.sh', '/app/world']
     environment:
       <<: *base-environment
+      STATIC_ZONES: ${STATIC_ZONES:-}
+      STATIC_ZONE_PORT_START: ${STATIC_ZONE_PORT_START:-7401}
+      STATIC_ZONE_PORT_END: ${STATIC_ZONE_PORT_END:-7425}
     ports:
       - 9000:9000/udp
     volumes:
@@ -57,8 +60,13 @@ services:
     volumes:
       - shared:/app/shared
     depends_on:
-      - db
-      - world
+      db:
+        condition: service_started
+      # Servertalk clients resolve world's address only once, so they must
+      # restart whenever world is recreated with a new IP.
+      world:
+        condition: service_started
+        restart: true
 
   boats:
     <<: *base-service
@@ -69,15 +77,40 @@ services:
     volumes:
       - shared:/app/shared
     depends_on:
-      - db
-      - world
+      db:
+        condition: service_started
+      world:
+        condition: service_started
+        restart: true
+
+  # Runs the zones listed in STATIC_ZONES; exits at startup when that is empty.
+  static:
+    <<: *base-service
+    command: /app/static_launcher.sh
+    environment:
+      <<: *base-environment
+      STATIC_ZONES: ${STATIC_ZONES:-}
+    ports:
+      - ${STATIC_ZONE_PORT_START:-7401}-${STATIC_ZONE_PORT_END:-7425}:${STATIC_ZONE_PORT_START:-7401}-${STATIC_ZONE_PORT_END:-7425}/tcp
+      - ${STATIC_ZONE_PORT_START:-7401}-${STATIC_ZONE_PORT_END:-7425}:${STATIC_ZONE_PORT_START:-7401}-${STATIC_ZONE_PORT_END:-7425}/udp
+    volumes:
+      - shared:/app/shared
+    depends_on:
+      db:
+        condition: service_started
+      world:
+        condition: service_started
+        restart: true
 
   queryserv:
     <<: *base-service
     command: /app/queryserv
     depends_on:
-      - db
-      - world
+      db:
+        condition: service_started
+      world:
+        condition: service_started
+        restart: true
 
   ucs:
     <<: *base-service
@@ -86,8 +119,11 @@ services:
       - 7778:7778/tcp
       - 7778:7778/udp
     depends_on:
-      - db
-      - world
+      db:
+        condition: service_started
+      world:
+        condition: service_started
+        restart: true
 
   db:
     build:
