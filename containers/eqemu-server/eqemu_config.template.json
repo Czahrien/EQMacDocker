@@ -22,7 +22,7 @@
         "ip": "world",
         "port": "9000"
       },
-      "key": "somelongrandomstring12345asdfffff",
+      "key": "${WORLD_SHARED_KEY}",
       "shortname": "${SERVER_SHORT_NAME}",
       "longname": "${SERVER_LONG_NAME}",
       "address": "${SERVER_ADDRESS}",

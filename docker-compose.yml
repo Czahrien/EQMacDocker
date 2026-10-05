@@ -9,6 +9,7 @@ x-base-service: &base-service
     SERVER_ADDRESS: ${SERVER_ADDRESS}
     SERVER_SHORT_NAME: ${SERVER_SHORT_NAME:-EQMac Docker}
     SERVER_LONG_NAME: ${SERVER_LONG_NAME:-EQMac Docker}
+    WORLD_SHARED_KEY: ${WORLD_SHARED_KEY:?Set WORLD_SHARED_KEY in .env}
     WAIT_HOSTS: db:3306
 
 services:
@@ -25,6 +26,9 @@ services:
   login:
     <<: *base-service
     command: /app/loginserver
+    environment:
+      <<: *base-environment
+      LOGIN_PASSWORD_SALT: ${LOGIN_PASSWORD_SALT:?Set LOGIN_PASSWORD_SALT in .env}
     ports:
       - 6000:6000/tcp
       - 6000:6000/udp
@@ -36,9 +40,7 @@ services:
     command: /app/world
     environment:
       <<: *base-environment
-        #WAIT_PATHS: /app/shared/base_data
     ports:
-      - 9000:9000/tcp
       - 9000:9000/udp
     volumes:
       - shared:/app/shared

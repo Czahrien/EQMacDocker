@@ -14,6 +14,7 @@ git clone --recurse-submodules https://github.com/nickgal/EQMacDocker
 cd EQMacDocker
 
 # Create .env from the example, be sure to update SERVER_ADDRESS
+# and set LOGIN_PASSWORD_SALT and WORLD_SHARED_KEY
 cp .env.example .env
 
 # Run the server
@@ -27,5 +28,3 @@ Static zones
 PhpMyAdmin
 
 PEQ Editor
-
-World salt & login key

@@ -6,7 +6,7 @@
     "user": "${DATABASE_USER}",
     "password": "${DATABASE_PASSWORD}",
     "subsystem": "MySQL",
-    "salt": "randomstring"
+    "salt": "${LOGIN_PASSWORD_SALT}"
   },
   "logsys_database": {
     "host": "db",
