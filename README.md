@@ -111,12 +111,18 @@ Zones run in three launcher containers:
 
   - **Dynamic zones** (`zone`): `DYNAMIC_ZONES` idle zone processes (default
     10). When a player enters a zone that is not running, world assigns it to
-    one of them. Once a zone has been empty for a while
-    (`Zone:AutoShutdownDelay`, an hour in the Quarm database), it shuts down
-    and the process becomes idle again. When every process is busy, players
-    cannot enter zones that are not already running, so set this to at least
-    the number of zones you expect to be in use at once. The maximum is 254;
-    each idle process uses about 14 MiB and each loaded zone a few times that.
+    one of them. When every process is busy, players cannot enter zones that
+    are not already running, so set this to at least the number of zones you
+    expect to be in use at once. The maximum is 254; each idle process uses
+    about 14 MiB and each loaded zone a few times that.
+
+    An empty dynamic zone shuts down and frees its process, but not as soon as
+    the last player leaves. Its shutdown timer starts when the zone boots and
+    repeats; each time it runs out, the zone shuts down if it is empty and
+    otherwise starts another cycle. The Quarm database sets the timer to 12
+    hours for every zone, so a zone can stay up for up to 12 hours after
+    everyone leaves. Set `DYNAMIC_ZONE_SHUTDOWN_MINUTES` to shorten it, e.g.
+    `15`. Zones already running keep their timer until they next boot.
   - **Boat zones** (`boats`): the zones boats travel between (Erudin, Qeynos,
     Freeport, Butcherblock, Timorous Deep, Firiona Vie and others) always run,
     so boats keep working. They are set up by
@@ -128,11 +134,17 @@ Zones run in three launcher containers:
     one port per zone. When `STATIC_ZONES` is empty, the `static` container
     exits at startup.
 
-World applies `DYNAMIC_ZONES` and `STATIC_ZONES` when it starts. After
-changing either, run `docker compose up -d`; this restarts world, which
-disconnects everyone online. World refuses to start, and its log says why,
-if `DYNAMIC_ZONES` is not a number from 0 to 254, or if `STATIC_ZONES` has an
-unknown zone, a boat zone, or more zones than ports.
+World applies `DYNAMIC_ZONES`, `DYNAMIC_ZONE_SHUTDOWN_MINUTES` and
+`STATIC_ZONES` when it starts. After changing any of them, run
+`docker compose up -d`; this restarts world, which disconnects everyone
+online. World refuses to start, and its log says why, if `DYNAMIC_ZONES` is
+not a number from 0 to 254, `DYNAMIC_ZONE_SHUTDOWN_MINUTES` is not a number
+from 1 to 35791, or `STATIC_ZONES` has an unknown zone, a boat zone, or more
+zones than ports.
+
+`DYNAMIC_ZONE_SHUTDOWN_MINUTES` sets the timer for every zone in the `zone`
+table, overwriting any per-zone values. Leaving it empty changes nothing, so
+to go back to the original behavior, set it to `720` (12 hours).
 
 Each static zone is a process that runs whether or not anyone is in it, so
 memory use grows with the list.
@@ -160,24 +172,25 @@ the internet.
 
 All settings live in `.env`. Changes take effect after `docker compose up -d`.
 
-| Variable                 | Default        | Description                                             |
-| ------------------------ | -------------- | ------------------------------------------------------- |
-| `SERVER_ADDRESS`         |                | Address clients use to reach the server                 |
-| `SERVER_SHORT_NAME`      | `EQMac Docker` | Server short name                                       |
-| `SERVER_LONG_NAME`       | `EQMac Docker` | Name shown in the server list                           |
-| `DATABASE_USER`          | `eq`           | Database user                                           |
-| `DATABASE_PASSWORD`      | `eq`           | Database password                                       |
-| `DATABASE_NAME`          | `eq`           | Database name                                           |
-| `LOGIN_PASSWORD_SALT`    | required       | Salt for login account passwords                        |
-| `WORLD_SHARED_KEY`       | required       | Key the server processes use to authenticate with world |
-| `DYNAMIC_ZONES`          | `10`           | Idle zone processes for dynamic zones (0-254)           |
-| `STATIC_ZONES`           | empty          | Comma-separated zone short names to keep running        |
-| `STATIC_ZONE_PORT_START` | `7401`         | First static zone port                                  |
-| `STATIC_ZONE_PORT_END`   | `7425`         | Last static zone port                                   |
-| `COMPOSE_PROFILES`       | empty          | Optional tools: `phpmyadmin`, `peqeditor`               |
-| `PHPMYADMIN_PORT`        | `8080`         | phpMyAdmin port                                         |
-| `PEQ_EDITOR_PORT`        | `8081`         | PEQ editor port                                         |
-| `PEQ_EDITOR_PASSWORD`    | required*      | PEQ editor admin password (*if `peqeditor` is enabled)  |
+| Variable                        | Default        | Description                                             |
+| ------------------------------- | -------------- | ------------------------------------------------------- |
+| `SERVER_ADDRESS`                |                | Address clients use to reach the server                 |
+| `SERVER_SHORT_NAME`             | `EQMac Docker` | Server short name                                       |
+| `SERVER_LONG_NAME`              | `EQMac Docker` | Name shown in the server list                           |
+| `DATABASE_USER`                 | `eq`           | Database user                                           |
+| `DATABASE_PASSWORD`             | `eq`           | Database password                                       |
+| `DATABASE_NAME`                 | `eq`           | Database name                                           |
+| `LOGIN_PASSWORD_SALT`           | required       | Salt for login account passwords                        |
+| `WORLD_SHARED_KEY`              | required       | Key the server processes use to authenticate with world |
+| `DYNAMIC_ZONES`                 | `10`           | Idle zone processes for dynamic zones (0-254)           |
+| `DYNAMIC_ZONE_SHUTDOWN_MINUTES` | empty          | Minutes before an empty dynamic zone shuts down         |
+| `STATIC_ZONES`                  | empty          | Comma-separated zone short names to keep running        |
+| `STATIC_ZONE_PORT_START`        | `7401`         | First static zone port                                  |
+| `STATIC_ZONE_PORT_END`          | `7425`         | Last static zone port                                   |
+| `COMPOSE_PROFILES`              | empty          | Optional tools: `phpmyadmin`, `peqeditor`               |
+| `PHPMYADMIN_PORT`               | `8080`         | phpMyAdmin port                                         |
+| `PEQ_EDITOR_PORT`               | `8081`         | PEQ editor port                                         |
+| `PEQ_EDITOR_PASSWORD`           | required*      | PEQ editor admin password (*if `peqeditor` is enabled)  |
 
 Changing `LOGIN_PASSWORD_SALT` invalidates the password of every existing
 login account, because every password is hashed with it.

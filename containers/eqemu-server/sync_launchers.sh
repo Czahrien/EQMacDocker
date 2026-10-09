@@ -1,7 +1,8 @@
 #!/bin/bash
-# Apply DYNAMIC_ZONES and STATIC_ZONES to the launcher tables, then run the
-# given command. World reads the launcher tables only when it starts, so this
-# runs in the world container just before world.
+# Apply DYNAMIC_ZONES and STATIC_ZONES to the launcher tables and
+# DYNAMIC_ZONE_SHUTDOWN_MINUTES to the zone table, then run the given command.
+# World reads the launcher tables only when it starts, so this runs in the
+# world container just before world.
 set -euo pipefail
 
 DYNAMIC_LAUNCHER=dynzone1
@@ -16,9 +17,18 @@ sql() {
 }
 
 # World names dynamic zones dynamic_01 through dynamic_254.
-if [[ ! "$DYNAMIC_ZONES" =~ ^[0-9]+$ ]] || (( DYNAMIC_ZONES > 254 )); then
+if [[ ! "$DYNAMIC_ZONES" =~ ^[0-9]+$ ]] || (( 10#$DYNAMIC_ZONES > 254 )); then
     echo "DYNAMIC_ZONES: must be a number from 0 to 254, got [$DYNAMIC_ZONES]" >&2
     exit 1
+fi
+
+# Zones read shutdowndelay (milliseconds, a signed 32-bit int) when they boot.
+SHUTDOWN_MINUTES=${DYNAMIC_ZONE_SHUTDOWN_MINUTES:-}
+if [ -n "$SHUTDOWN_MINUTES" ]; then
+    if [[ ! "$SHUTDOWN_MINUTES" =~ ^[0-9]+$ ]] || (( 10#$SHUTDOWN_MINUTES < 1 || 10#$SHUTDOWN_MINUTES > 35791 )); then
+        echo "DYNAMIC_ZONE_SHUTDOWN_MINUTES: must be a number from 1 to 35791, got [$SHUTDOWN_MINUTES]" >&2
+        exit 1
+    fi
 fi
 
 zones=()
@@ -58,6 +68,7 @@ if (( ${#zones[@]} > 0 )); then
 fi
 
 echo "Dynamic zones: [$DYNAMIC_ZONES]"
+DYNAMIC_ZONES=$((10#$DYNAMIC_ZONES))
 statements="INSERT INTO launcher (name, dynamics) VALUES ('$DYNAMIC_LAUNCHER', $DYNAMIC_ZONES)
     ON DUPLICATE KEY UPDATE dynamics = $DYNAMIC_ZONES;
 INSERT INTO launcher (name, dynamics) VALUES ('$LAUNCHER', 0)
@@ -70,6 +81,11 @@ INSERT INTO launcher_zones (launcher, zone, port, enabled) VALUES ('$LAUNCHER', 
     echo "Static zone [$zone] on port [$port]"
     port=$((port + 1))
 done
+if [ -n "$SHUTDOWN_MINUTES" ]; then
+    echo "Dynamic zone shutdown delay: [$SHUTDOWN_MINUTES] minutes"
+    statements+="
+UPDATE zone SET shutdowndelay = $((10#$SHUTDOWN_MINUTES * 60000));"
+fi
 sql "$statements"
 
 exec "$@"
