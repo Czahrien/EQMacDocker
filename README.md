@@ -36,8 +36,8 @@ Edit `.env`:
 
   - `SERVER_ADDRESS`: the address clients use to reach this server. On a LAN,
     this is the Docker host's LAN IP, not a container IP. World hands this
-    address to clients when they enter a zone, so it must be reachable from
-    the client.
+    address to clients for zones and for chat, so it must be reachable from
+    the client. World stops at startup if it is empty.
   - `DATABASE_USER`, `DATABASE_PASSWORD`, `DATABASE_NAME`: credentials for the
     database container. They are only used inside Docker.
   - `LOGIN_PASSWORD_SALT` and `WORLD_SHARED_KEY`: required. Generate each with
@@ -252,6 +252,11 @@ Rebuild with `docker compose up -d --build`. A database change needs a reset
     connecting. If they are missing, check the `zone` and `boats` logs.
   - **Server list shows the server but zoning fails**: `SERVER_ADDRESS` is
     not reachable from the client, or the zone ports are blocked.
+  - **Chat channels do not connect**: world tells clients to use
+    `SERVER_ADDRESS` port 7778 for chat, so that port must be reachable. A
+    player only gets the address when entering the world from character
+    select, so after changing `SERVER_ADDRESS` they need to camp and log back
+    in.
   - **World warns about Docker or a public address mismatch**: these startup
     checks compare `SERVER_ADDRESS` with the container and public IPs. They
     are only a problem if clients outside your network need to connect.
