@@ -220,6 +220,12 @@ The SQL files in `containers/database` only run when the database volume is
 first created. To apply a change to them on an existing database, run the
 file through the database shell or reset the database.
 
+## Optional fixes
+
+[`optional/`](optional/) has SQL changes you can apply by hand, such as
+turning off Quarm's shortened respawn times. Its README describes each one,
+how to apply and undo it, and other Quarm rules worth knowing about.
+
 ## Updating the server
 
 To update to newer Quarm code and content:
