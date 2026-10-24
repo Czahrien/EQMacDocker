@@ -141,7 +141,10 @@ services:
 
   # Optional tools, enabled through COMPOSE_PROFILES in .env.
   phpmyadmin:
-    image: phpmyadmin:5.2
+    # Pinned to a build on PHP 8.3.36, which fixes PHP2Shell
+    # (CVE-2026-109618, CVE-2026-109619). The digest keeps a stale local
+    # phpmyadmin:5.2 image from being reused.
+    image: phpmyadmin:5.2.3@sha256:62a50b1419fe55b9b4c3cd6f5aed03a18f8f5b4a236f24735d76400bea75a5ff
     profiles: [phpmyadmin]
     environment:
       PMA_HOST: db
