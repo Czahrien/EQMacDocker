@@ -1,4 +1,7 @@
-FROM php:8.3-apache
+# Pinned to PHP 8.3.36, which fixes PHP2Shell (CVE-2026-109618,
+# CVE-2026-109619). The digest keeps a stale local php:8.3-apache image from
+# being reused.
+FROM php:8.3.36-apache@sha256:0d46cb96775228313d3997c155f78227de13bf9972e0c736e653fb23aded79b2
 
 RUN docker-php-ext-install mysqli
 
